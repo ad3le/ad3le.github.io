@@ -252,7 +252,7 @@ function demoStory(){
     scenes:[
       {id:a, text:"You stand before a crumbling tower.\nThe door hangs open.\n\nWhat do you do?",
         choices:[{label:"Go inside",next:b},{label:"Walk away",next:c}]},
-      {id:b, text:"Inside it is dark... [[PAUSE:1]] too dark.\n\nSomething shifts in the corner.",
+      {id:b, text:"Inside it is dark... too dark.\n\nSomething shifts in the corner.",
         choices:[]},
       {id:c, text:"You walk home as the sun sets.\nSafe, but always wondering.",
         choices:[]},
@@ -400,7 +400,7 @@ function renderWrite(){
         <span class="spacer"></span>
         ${state.scenes.length>1?`<button class="btn-ghost btn-small" data-del="${s.id}">Delete</button>`:""}
       </div>
-      <textarea data-text="${s.id}" placeholder="What happens in this scene? (you can use [[PAUSE:1]] for a dramatic beat)">${esc(s.text)}</textarea>
+      <textarea data-text="${s.id}" placeholder="What happens in this scene?">${esc(s.text)}</textarea>
       <div class="choices">`;
     s.choices.forEach((ch,ci)=>{
       html+=`<div class="choice">
