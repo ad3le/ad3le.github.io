@@ -1,12 +1,670 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>Page Title</title>
-</head>
-<body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choosatron Story Maker</title>
+<style>
+  :root{
+    --ink:#15171c; --panel:#1f242e; --panel2:#2a313d; --edge:#3a4350;
+    --paper:#f3efe3; --paper2:#e9e3d2; --paperline:#cfc8b4; --paperink:#26241d;
+    --red:#e8473f; --amber:#f2a93b; --green:#49b96b; --blue:#3d9bd6;
+    --text:#e9ebf0; --muted:#959eae; --good:#49b96b; --warn:#f2a93b;
+    --mono:"SFMono-Regular",ui-monospace,"Cascadia Mono","Courier New",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #232a35, var(--ink)) fixed;
+    color:var(--text); font-family:var(--sans); line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:980px; margin:0 auto; padding:0 14px 80px}
 
-<h1>This is a Heading</h1>
-<p>This is a paragraph.</p>
+  /* ---- machine header ---- */
+  header.machine{
+    margin:14px 0 10px; padding:14px 16px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--edge); border-radius:14px;
+    box-shadow:0 1px 0 #ffffff10 inset, 0 10px 30px #0006;
+  }
+  .brandrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .led{width:11px;height:11px;border-radius:50%;background:var(--amber);
+    box-shadow:0 0 10px var(--amber),0 0 2px #fff8 inset; flex:0 0 auto;
+    animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.led{animation:none}}
+  .brand{font-family:var(--mono); font-weight:700; letter-spacing:.18em;
+    text-transform:uppercase; font-size:15px}
+  .brand small{display:block;letter-spacing:.06em;color:var(--muted);
+    font-weight:500;font-size:11px;margin-top:2px}
+  .spacer{flex:1 1 auto}
+  .iobtns{display:flex;gap:8px}
 
-</body>
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .field{flex:1 1 200px;min-width:160px}
+  .field label{display:block;font-size:11px;text-transform:uppercase;
+    letter-spacing:.1em;color:var(--muted);margin:0 0 4px 2px}
+  input[type=text],textarea,select{
+    width:100%;background:var(--ink);color:var(--text);
+    border:1px solid var(--edge);border-radius:9px;padding:9px 10px;
+    font-family:var(--sans);font-size:15px}
+  textarea{font-family:var(--mono);font-size:13.5px;line-height:1.45;resize:vertical;min-height:78px}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--blue);outline-offset:1px;border-color:transparent}
+
+  /* ---- buttons ---- */
+  button{font-family:var(--sans);cursor:pointer;border:none;border-radius:9px;
+    font-size:14px;padding:9px 13px;color:#fff;background:var(--panel2);
+    border:1px solid var(--edge)}
+  button:hover{filter:brightness(1.12)}
+  button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .btn-primary{background:var(--red);border-color:#0000}
+  .btn-ghost{background:#0000;color:var(--muted)}
+  .btn-small{padding:6px 9px;font-size:12.5px}
+
+  /* ---- tabs ---- */
+  nav.tabs{display:flex;gap:6px;margin:14px 0 12px;
+    background:var(--panel);padding:5px;border-radius:12px;border:1px solid var(--edge)}
+  nav.tabs button{flex:1;background:#0000;border:none;color:var(--muted);
+    font-weight:600;letter-spacing:.04em;border-radius:8px;padding:10px}
+  nav.tabs button[aria-selected=true]{background:var(--panel2);color:var(--text);
+    box-shadow:0 1px 0 #fff1 inset}
+
+  /* ---- status chip ---- */
+  .status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;
+    padding:5px 10px;border-radius:999px;border:1px solid var(--edge);
+    background:var(--panel);color:var(--muted)}
+  .status .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .status.ok .dot{background:var(--good)} .status.ok{color:#cfe9d6}
+  .status.bad .dot{background:var(--warn)} .status.bad{color:#f2dcb0}
+
+  /* ---- scene cards ---- */
+  .scene{background:var(--panel);border:1px solid var(--edge);border-radius:13px;
+    padding:13px 13px 11px;margin:0 0 12px}
+  .scene.flash{animation:flash 1.4s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 2px var(--amber)}100%{box-shadow:0 0 0 0 #0000}}
+  .scene .top{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+  .badge{font-family:var(--mono);font-size:11px;color:var(--muted);
+    background:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:3px 7px}
+  .startpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer}
+  .startpill input{accent-color:var(--green)}
+  .startpill.is-start{color:var(--green);font-weight:600}
+  .choices{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+  .choice{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cnum{width:26px;height:26px;flex:0 0 auto;border-radius:50%;
+    display:grid;place-items:center;font-family:var(--mono);font-weight:700;
+    color:#1a1a1a;font-size:13px}
+  .cnum.c1{background:var(--red);color:#fff} .cnum.c2{background:var(--amber)} .cnum.c3{background:var(--green);color:#fff}
+  .choice .label{flex:2 1 130px;min-width:120px}
+  .choice .goto{flex:1 1 150px;min-width:140px}
+  .hint{font-size:12px;color:var(--muted);margin:8px 2px 0}
+  .addrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+  .issues{background:#2a1f1c;border:1px solid #5e3b34;border-radius:11px;
+    padding:11px 13px;margin:0 0 12px;font-size:13.5px}
+  .issues h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#f2b8ae}
+  .issues a{color:var(--amber);cursor:pointer;text-decoration:underline}
+  .issues ul{margin:0;padding-left:18px} .issues li{margin:3px 0}
+
+  /* ---- receipt (play) ---- */
+  .stage{display:grid;place-items:start center;padding:6px 0}
+  .receipt{width:340px;max-width:100%;background:var(--paper);color:var(--paperink);
+    font-family:var(--mono);font-size:13px;line-height:1.5;
+    padding:20px 18px 6px;border-radius:3px;
+    box-shadow:0 18px 40px #0007, 0 2px 0 #0003;
+    background-image:repeating-linear-gradient(180deg,#0000 0 22px,#00000005 22px 23px);
+    position:relative}
+  .receipt::before,.receipt::after{content:"";position:absolute;left:0;right:0;height:9px;
+    background:radial-gradient(circle at 6px 9px,#0000 0 5px,var(--paper) 5px) repeat-x;
+    background-size:12px 9px}
+  .receipt::before{top:-8px;transform:scaleY(-1)} .receipt::after{bottom:-8px}
+  .receipt pre{margin:0;white-space:pre-wrap;word-break:break-word;font:inherit}
+  .rcenter{text-align:center}
+  .pausebar{color:#9b9686;text-align:center;letter-spacing:.3em;margin:2px 0}
+  .deadlink{color:var(--red)}
+  .arcade{display:flex;gap:12px;justify-content:center;margin:16px 0 4px;flex-wrap:wrap}
+  .abtn{display:flex;flex-direction:column;align-items:center;gap:6px;background:#0000;border:none;padding:0;cursor:pointer}
+  .acirc{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:20px;color:#fff;
+    box-shadow:0 5px 0 #0006, 0 8px 14px #0007; border:2px solid #ffffff30}
+  .abtn:active .acirc{transform:translateY(3px);box-shadow:0 2px 0 #0006}
+  .acirc.c1{background:var(--red)} .acirc.c2{background:var(--amber);color:#241a00} .acirc.c3{background:var(--green)}
+  .alabel{font-size:12.5px;color:var(--muted);max-width:96px}
+  .playbar{display:flex;gap:10px;justify-content:center;margin-top:8px}
+
+  /* ---- map ---- */
+  .maphold{overflow:auto;background:var(--panel);border:1px solid var(--edge);
+    border-radius:13px;padding:10px}
+  .maphold svg{display:block}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 2px 0}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .node rect{cursor:pointer}
+  .node text{pointer-events:none;font-family:var(--sans);fill:#11151b}
+  .empty{color:var(--muted);text-align:center;padding:30px 10px}
+  .tip{font-size:12.5px;color:var(--muted);margin:10px 2px 0}
+  .modalback{position:fixed;inset:0;background:#000a;display:none;place-items:center;padding:18px;z-index:50}
+  .modalback.open{display:grid}
+  .modal{background:var(--panel);border:1px solid var(--edge);border-radius:14px;max-width:440px;width:100%;padding:18px;box-shadow:0 20px 50px #000a}
+  .modal h2{margin:0 0 4px;font-family:var(--mono);font-size:15px;letter-spacing:.04em}
+  .modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .msg-ok{color:var(--green)} .msg-err{color:#f3a39b}
+</style>
+
+<div class="wrap">
+  <header class="machine">
+    <div class="brandrow">
+      <span class="led" aria-hidden="true"></span>
+      <div class="brand">Choosatron Story Maker
+        <small>write a branching story · test it · export it for the machine</small></div>
+      <span class="spacer"></span>
+      <div class="iobtns">
+        <button class="btn-ghost btn-small" id="loadBtn" title="Re-open a story file you exported earlier and keep editing it">Open story</button>
+        <button class="btn-small" id="exportBtn" title="Download a copy of this story">Export</button>
+        <button class="btn-primary btn-small" id="submitBtn">Submit for approval</button>
+        <input type="file" id="fileIn" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="field"><label for="title">Story title</label>
+        <input type="text" id="title" placeholder="The Crumbling Tower"></div>
+      <div class="field"><label for="author">Your name</label>
+        <input type="text" id="author" placeholder="Mary"></div>
+    </div>
+    <div class="hint" style="margin-top:9px">Your work saves automatically on this device. <b>Export</b> keeps a copy you can re-open later (or on another phone) with <b>Open story</b>.</div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="write" aria-selected="true">Write</button>
+    <button role="tab" data-tab="map" aria-selected="false">Map</button>
+    <button role="tab" data-tab="play" aria-selected="false">Play &amp; preview</button>
+  </nav>
+
+  <div style="margin:0 2px 12px"><span class="status" id="status"><span class="dot"></span><span id="statusText">—</span></span><span id="saveind" style="font-size:12px;color:var(--muted);margin-left:9px"></span></div>
+
+  <main id="view"></main>
+</div>
+
+<div class="modalback" id="submitModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="smTitle">
+    <h2 id="smTitle">Send for approval</h2>
+    <p class="hint" id="smDesc" style="margin:0 0 12px"></p>
+    <label class="hint" for="smMsg">Add a note (optional)</label>
+    <textarea id="smMsg" placeholder="Anything you'd like to say to the curator…" style="min-height:60px"></textarea>
+    <input class="hp" id="smHp" tabindex="-1" autocomplete="off" aria-hidden="true" placeholder="Leave empty">
+    <div id="smStatus" class="hint" style="margin-top:10px"></div>
+    <div class="row">
+      <button class="btn-ghost btn-small" id="smCancel">Cancel</button>
+      <button class="btn-primary btn-small" id="smSend">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   SUBMIT FOR APPROVAL — paste your form address between the quotes.
+   Free option: make a form at formspree.io, copy its endpoint,
+   e.g.  https://formspree.io/f/abcdwxyz
+   Until you do, the Submit button explains it's not switched on yet.
+   ============================================================ */
+const SUBMIT_ENDPOINT = "PASTE_YOUR_FORM_ENDPOINT_HERE";
+const SUBMIT_CONFIGURED = /^https?:\/\//.test(SUBMIT_ENDPOINT);
+
+const LINE_WIDTH = 32;
+const SLOT = ["1","2","3"];
+
+// ---------- state ----------
+let seq = 0;
+function uid(){ seq++; return "s"+seq; }
+let state = null;
+
+// ---------- auto-save (localStorage; harmless if blocked, e.g. in a sandbox) ----------
+const SAVE_KEY="choosatron_story_v1";
+let saveTimer=null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,400); }
+function saveNow(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({v:1, seq, state}));
+    setSaveNote("✓ saved");
+  }catch(e){ setSaveNote("auto-save runs on your hosted site (off in this preview)"); }
+}
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
+    const obj=JSON.parse(raw);
+    if(obj && obj.state && obj.state.scenes && obj.state.scenes.length){
+      if(typeof obj.seq==="number") seq=obj.seq;
+      return obj.state;
+    }
+  }catch(e){}
+  return null;
+}
+function setSaveNote(t){ const el=document.getElementById("saveind"); if(el) el.textContent=t; }
+function clearSaved(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+function demoStory(){
+  const a=uid(), b=uid(), c=uid();
+  return {
+    title:"The Crumbling Tower", author:"Mary", startId:a,
+    scenes:[
+      {id:a, text:"You stand before a crumbling tower.\nThe door hangs open.\n\nWhat do you do?",
+        choices:[{label:"Go inside",next:b},{label:"Walk away",next:c}]},
+      {id:b, text:"Inside it is dark... [[PAUSE:1]] too dark.\n\nSomething shifts in the corner.",
+        choices:[]},
+      {id:c, text:"You walk home as the sun sets.\nSafe, but always wondering.",
+        choices:[]},
+    ]
+  };
+}
+function blankStory(){ const a=uid();
+  return {title:"",author:"",startId:a,
+    scenes:[{id:a,text:"",choices:[]}]}; }
+
+// ---------- helpers ----------
+function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function slug(s){return (s||"story").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"story";}
+function sceneById(id){return state.scenes.find(s=>s.id===id);}
+function sceneIndex(id){return state.scenes.findIndex(s=>s.id===id);}
+function sceneLabel(s){
+  const i=sceneIndex(s.id)+1;
+  const snip=(s.text||"").replace(/\s+/g," ").trim().slice(0,22);
+  return "Scene "+i+(snip?": "+snip+(s.text.length>22?"…":""):" (empty)");
+}
+
+// wrap one line the way the printer does
+function wrapLine(line){
+  if(line.trim()==="") return [""];
+  if(line.length<=LINE_WIDTH) return [line];
+  const stripped=line.replace(/^ +/,"");
+  const indent=" ".repeat(line.length-stripped.length);
+  const words=stripped.split(/\s+/).filter(Boolean);
+  const out=[]; let cur="";
+  for(let w of words){
+    while((indent+w).length>LINE_WIDTH){ // very long single word
+      if(cur){out.push(indent+cur);cur="";}
+      out.push((indent+w).slice(0,LINE_WIDTH)); w=w.slice(LINE_WIDTH-indent.length);
+    }
+    const test=cur?cur+" "+w:w;
+    if((indent+test).length<=LINE_WIDTH) cur=test;
+    else {out.push(indent+cur);cur=w;}
+  }
+  if(cur) out.push(indent+cur);
+  return out;
+}
+// turn scene text into renderable blocks (text lines + pause markers)
+function renderBlocks(text){
+  const blocks=[];
+  for(const raw of (text||"").split("\n")){
+    if(raw.indexOf("[[PAUSE:")===-1){ for(const l of wrapLine(raw)) blocks.push({t:"line",v:l}); continue; }
+    let i=0;
+    while(true){
+      const start=raw.indexOf("[[PAUSE:",i);
+      if(start===-1){ for(const l of wrapLine(raw.slice(i))) blocks.push({t:"line",v:l}); break; }
+      const before=raw.slice(i,start);
+      if(before.trim()) for(const l of wrapLine(before)) blocks.push({t:"line",v:l});
+      const end=raw.indexOf("]]",start);
+      const secs=raw.slice(start+8,end);
+      blocks.push({t:"pause",v:secs});
+      i=end+2;
+    }
+  }
+  return blocks;
+}
+
+// ---------- validation ----------
+function validate(){
+  const issues=[];
+  if(!sceneById(state.startId)) issues.push({msg:"No starting scene is set."});
+  const reachable=new Set(); 
+  if(sceneById(state.startId)){
+    const stack=[state.startId];
+    while(stack.length){const id=stack.pop(); if(reachable.has(id))continue; reachable.add(id);
+      const s=sceneById(id); if(!s)continue;
+      for(const ch of s.choices){ if(ch.next && sceneById(ch.next)) stack.push(ch.next); }}
+  }
+  let endings=0;
+  state.scenes.forEach((s,idx)=>{
+    if(!s.text.trim()) issues.push({msg:`Scene ${idx+1} has no text.`, id:s.id});
+    if(s.choices.length===0) endings++;
+    s.choices.forEach((ch,ci)=>{
+      if(!ch.label.trim()) issues.push({msg:`Scene ${idx+1}, button ${ci+1} has no label.`, id:s.id});
+      if(!ch.next || !sceneById(ch.next)) issues.push({msg:`Scene ${idx+1}, button ${ci+1} ("${esc(ch.label)||"?"}") doesn't lead anywhere yet.`, id:s.id});
+    });
+    if(!reachable.has(s.id) && s.id!==state.startId) issues.push({msg:`Scene ${idx+1} can't be reached from the start.`, id:s.id});
+  });
+  if(endings===0) issues.push({msg:"There's no ending — at least one scene should have no buttons."});
+  return {issues, reachable, endings};
+}
+
+// ---------- export / import ----------
+function toMachineJSON(){
+  const nodes={};
+  for(const s of state.scenes){
+    const choices={};
+    s.choices.forEach((ch,i)=>{ if(SLOT[i]) choices[SLOT[i]]={label:ch.label, next:ch.next}; });
+    nodes[s.id]={text:s.text, choices};
+  }
+  return {title:state.title, author:state.author, start:state.startId, nodes};
+}
+function exportStory(){
+  const data=toMachineJSON();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=slug(state.title)+".json";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function importStory(obj){
+  try{
+    const hasWork = state && (state.title.trim() || state.author.trim() ||
+      state.scenes.some(s=>s.text.trim() || s.choices.length));
+    if(hasWork && !confirm("Open this story? It will replace what's currently on screen.\n(Export first if you want to keep the current one.)")) return;
+    const idMap={}; const scenes=[];
+    const ids=Object.keys(obj.nodes||{});
+    ids.forEach(old=>{ idMap[old]=uid(); });
+    ids.forEach(old=>{
+      const n=obj.nodes[old]; const choices=[];
+      const keys=Object.keys(n.choices||{}).sort();
+      for(const k of keys){ const c=n.choices[k]; choices.push({label:c.label||"", next:idMap[c.next]||""}); }
+      scenes.push({id:idMap[old], text:n.text||"", choices});
+    });
+    state={title:obj.title||"", author:obj.author||"",
+      startId:idMap[obj.start]|| (scenes[0]&&scenes[0].id), scenes};
+    if(!state.scenes.length) state=blankStory();
+    syncHeader(); render();
+  }catch(e){ alert("That file didn't look like a Choosatron story. ("+e.message+")"); }
+}
+
+// ---------- write tab ----------
+function renderWrite(){
+  const v=validate();
+  let html="";
+  if(v.issues.length){
+    html+=`<div class="issues"><h3>${v.issues.length} thing${v.issues.length>1?"s":""} to fix before it'll play right</h3><ul>`;
+    for(const it of v.issues){
+      html+=`<li>${it.id?`<a data-goto="${it.id}">`:""}${it.msg}${it.id?"</a>":""}</li>`;
+    }
+    html+=`</ul></div>`;
+  }
+  state.scenes.forEach((s,idx)=>{
+    const isStart=s.id===state.startId;
+    html+=`<section class="scene" data-scene="${s.id}">
+      <div class="top">
+        <span class="badge">SCENE ${idx+1}</span>
+        <label class="startpill ${isStart?"is-start":""}">
+          <input type="radio" name="start" data-start="${s.id}" ${isStart?"checked":""}>
+          ${isStart?"★ Starting scene":"Make this the start"}
+        </label>
+        <span class="spacer"></span>
+        ${state.scenes.length>1?`<button class="btn-ghost btn-small" data-del="${s.id}">Delete</button>`:""}
+      </div>
+      <textarea data-text="${s.id}" placeholder="What happens in this scene? (you can use [[PAUSE:1]] for a dramatic beat)">${esc(s.text)}</textarea>
+      <div class="choices">`;
+    s.choices.forEach((ch,ci)=>{
+      html+=`<div class="choice">
+        <span class="cnum c${ci+1}">${ci+1}</span>
+        <input class="label" type="text" data-clabel="${s.id}:${ci}" placeholder="Button label (e.g. Open the door)" value="${esc(ch.label)}">
+        <select class="goto" data-cnext="${s.id}:${ci}">
+          <option value="">— choose where it leads —</option>
+          ${state.scenes.map(o=>`<option value="${o.id}" ${o.id===ch.next?"selected":""}>${esc(sceneLabel(o))}</option>`).join("")}
+          <option value="__new__">➕ New scene…</option>
+        </select>
+        <button class="btn-ghost btn-small" data-cdel="${s.id}:${ci}" title="Remove this button">✕</button>
+      </div>`;
+    });
+    html+=`</div>`;
+    if(s.choices.length===0) html+=`<div class="hint">No buttons = this is an ending.</div>`;
+    html+=`<div class="addrow">
+        ${s.choices.length<3?`<button class="btn-small" data-addchoice="${s.id}">+ Add a button</button>`:`<span class="hint">3 buttons max (you have 3 physical buttons).</span>`}
+      </div>
+    </section>`;
+  });
+  html+=`<div class="addrow"><button class="btn-small" id="addScene">+ Add a scene</button>
+         <button class="btn-ghost btn-small" id="resetDemo">Start from blank</button></div>`;
+  return html;
+}
+
+// ---------- map tab ----------
+function renderMap(){
+  const v=validate();
+  if(state.scenes.length===0) return `<div class="empty">No scenes yet.</div>`;
+  // depth via BFS from start
+  const depth={}; const start=state.startId;
+  if(sceneById(start)){ const q=[[start,0]]; depth[start]=0;
+    while(q.length){const [id,d]=q.shift(); const s=sceneById(id); if(!s)continue;
+      for(const ch of s.choices){ if(ch.next&&sceneById(ch.next)&&!(ch.next in depth)){depth[ch.next]=d+1;q.push([ch.next,d+1]);}}}}
+  const rows={}; let maxOrphan=0;
+  state.scenes.forEach(s=>{ const d=(s.id in depth)?depth[s.id]:-1;
+    (rows[d]=rows[d]||[]).push(s); });
+  const levels=Object.keys(rows).map(Number).sort((a,b)=>a-b);
+  const NW=150,NH=46,GX=34,GY=78, padX=18, padY=16;
+  const pos={}; let maxCols=0;
+  const ordered=levels.map(l=>rows[l]);
+  ordered.forEach(arr=>maxCols=Math.max(maxCols,arr.length));
+  const W=Math.max(maxCols*(NW+GX)-GX,NW)+padX*2;
+  const H=ordered.length*(NH+GY)-GY+padY*2;
+  ordered.forEach((arr,ri)=>{
+    const rowW=arr.length*(NW+GX)-GX;
+    const x0=padX+(W-padX*2-rowW)/2;
+    arr.forEach((s,ci)=>{ pos[s.id]={x:x0+ci*(NW+GX), y:padY+ri*(NH+GY)}; });
+  });
+  // edges
+  let edges="";
+  state.scenes.forEach(s=>{ const p=pos[s.id]; if(!p)return;
+    s.choices.forEach((ch,ci)=>{ const q=pos[ch.next]; if(!q)return;
+      const x1=p.x+NW/2, y1=p.y+NH, x2=q.x+NW/2, y2=q.y;
+      const my=(y1+y2)/2;
+      const col=["var(--red)","var(--amber)","var(--green)"][ci]||"var(--muted)";
+      edges+=`<path d="M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}" fill="none" stroke="${col}" stroke-width="2" opacity=".8" marker-end="url(#arw)"/>`;
+    });
+  });
+  let nodes="";
+  state.scenes.forEach((s,idx)=>{ const p=pos[s.id]; if(!p)return;
+    const isStart=s.id===state.startId;
+    const isEnd=s.choices.length===0;
+    const reachable=v.reachable.has(s.id)||isStart;
+    let fill="#dfe5ee", stroke="#9aa6b6";
+    if(isStart){fill="#cdeed6";stroke="var(--green)";}
+    else if(!reachable){fill="#f6d7d2";stroke="var(--red)";}
+    else if(isEnd){fill="#efe9d8";stroke="#bcae8a";}
+    const snip=(s.text||"").replace(/\s+/g," ").trim().slice(0,18)||"(empty)";
+    nodes+=`<g class="node" data-goto="${s.id}">
+      <rect x="${p.x}" y="${p.y}" width="${NW}" height="${NH}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+      <text x="${p.x+10}" y="${p.y+18}" font-size="11" font-weight="700">${esc("Scene "+(idx+1))}${isStart?" ★":""}${isEnd?" ▣":""}</text>
+      <text x="${p.x+10}" y="${p.y+34}" font-size="11" fill="#4a525e">${esc(snip)}</text>
+    </g>`;
+  });
+  return `<div class="maphold"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <defs><marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+      ${edges}${nodes}</svg></div>
+    <div class="legend">
+      <span><i style="background:#cdeed6"></i>Start (★)</span>
+      <span><i style="background:#efe9d8"></i>Ending (▣)</span>
+      <span><i style="background:#dfe5ee"></i>Scene</span>
+      <span><i style="background:#f6d7d2"></i>Unreachable</span>
+    </div>
+    <div class="tip">Tap any scene to jump to editing it. Arrow colours match the button (1 red · 2 yellow · 3 green).</div>`;
+}
+
+// ---------- play tab ----------
+let play=null;
+function renderPlayView(){            // refresh the receipt without restarting the playthrough
+  document.getElementById("view").innerHTML=renderPlay();
+  wireView(); renderStatus(); }
+function appendScene(id){ const s=sceneById(id);
+  if(!s){ play.log.push({t:"dead"}); play.ended=true; return; }
+  play.log.push({t:"scene", blocks:renderBlocks(s.text)});
+  if(s.choices.length===0){ play.log.push({t:"end"}); play.ended=true; }
+}
+function playChoose(ci){ const s=sceneById(play.current); if(!s)return;
+  const ch=s.choices[ci]; if(!ch)return;
+  play.log.push({t:"pick", n:ci+1});
+  play.current=ch.next; appendScene(ch.next); renderPlayView();
+  const r=document.querySelector(".receipt"); if(r) r.scrollIntoView({block:"end",behavior:"smooth"});
+}
+function renderPlay(){
+  if(!sceneById(state.startId)) return `<div class="empty">Set a starting scene in the Write tab, then come back to play.</div>`;
+  if(!play) playStartSilent();
+  let lines="";
+  for(const item of play.log){
+    if(item.t==="scene"){ for(const b of item.blocks){
+        if(b.t==="line") lines+=esc(b.v)+"\n";
+        else lines+=`</pre><div class="pausebar">· · · · ·</div><pre>`;
+      } lines+="\n";
+    } else if(item.t==="pick"){ lines+=esc(String(item.n))+".\n\n"; }
+    else if(item.t==="end"){ lines+="\n"+center("THE END")+"\n"+ "--- tear here ---".padStart(24).padEnd(32).replace(/^/, "")+"\n"; }
+    else if(item.t==="dead"){ lines+=`</pre><div class="deadlink">↳ this button leads nowhere — fix it in Write</div><pre>`; }
+  }
+  const s=sceneById(play.current);
+  let buttons="";
+  if(s && s.choices.length && !play.ended){
+    buttons=`<div class="arcade">`+s.choices.map((ch,ci)=>
+      `<button class="abtn" data-pick="${ci}"><span class="acirc c${ci+1}">${ci+1}</span><span class="alabel">${esc(ch.label||"…")}</span></button>`
+    ).join("")+`</div>`;
+  }
+  return `<div class="stage"><div>
+      <div class="receipt"><pre class="rcenter">${esc(state.title||"UNTITLED")}\n${state.author?"a story by "+esc(state.author):""}\n========================</pre><pre>\n${lines}</pre></div>
+      ${buttons}
+      <div class="playbar"><button class="btn-small" id="replay">↺ Start over</button></div>
+    </div></div>
+    <div class="tip">This is what comes out of the printer. Press the buttons to walk every path and check it reads well.</div>`;
+}
+function center(t){ const pad=Math.max(0,Math.floor((LINE_WIDTH-t.length)/2)); return " ".repeat(pad)+t; }
+function playStartSilent(){ play={log:[],current:null,ended:false};
+  if(sceneById(state.startId)){play.current=state.startId; appendScene(state.startId);} }
+
+// ---------- tabs / render ----------
+let tab="write";
+function render(){
+  const view=document.getElementById("view");
+  if(tab==="write") view.innerHTML=renderWrite();
+  else if(tab==="map") view.innerHTML=renderMap();
+  else { play=null; view.innerHTML=renderPlay(); }
+  wireView();
+  renderStatus();
+}
+function renderStatus(){
+  const v=validate(); const el=document.getElementById("status"); const t=document.getElementById("statusText");
+  el.className="status "+(v.issues.length?"bad":"ok");
+  t.textContent=v.issues.length? `${v.issues.length} thing${v.issues.length>1?"s":""} to fix`
+    : `Ready · ${state.scenes.length} scene${state.scenes.length>1?"s":""}, ${v.endings} ending${v.endings>1?"s":""}`;
+  scheduleSave();
+}
+function syncHeader(){
+  document.getElementById("title").value=state.title;
+  document.getElementById("author").value=state.author;
+}
+
+function gotoScene(id){ tab="write"; setTabUI(); render();
+  setTimeout(()=>{const el=document.querySelector(`[data-scene="${id}"]`);
+    if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.classList.add("flash");}},30);
+}
+
+function wireView(){
+  const view=document.getElementById("view");
+  // write
+  view.querySelectorAll("[data-text]").forEach(t=>t.addEventListener("input",e=>{
+    sceneById(e.target.dataset.text).text=e.target.value; renderStatus(); }));
+  view.querySelectorAll("[data-clabel]").forEach(t=>t.addEventListener("input",e=>{
+    const [id,ci]=e.target.dataset.clabel.split(":"); sceneById(id).choices[+ci].label=e.target.value; renderStatus(); }));
+  view.querySelectorAll("[data-cnext]").forEach(sel=>sel.addEventListener("change",e=>{
+    const [id,ci]=e.target.dataset.cnext.split(":"); const val=e.target.value;
+    if(val==="__new__"){ const ns={id:uid(),text:"",choices:[]}; state.scenes.push(ns);
+      sceneById(id).choices[+ci].next=ns.id; render(); }
+    else { sceneById(id).choices[+ci].next=val; renderStatus(); if(tab!=="write")render(); }
+  }));
+  view.querySelectorAll("[data-start]").forEach(r=>r.addEventListener("change",e=>{
+    state.startId=e.target.dataset.start; render(); }));
+  view.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+    const id=e.target.dataset.del; state.scenes=state.scenes.filter(s=>s.id!==id);
+    state.scenes.forEach(s=>s.choices.forEach(c=>{if(c.next===id)c.next="";}));
+    if(state.startId===id) state.startId=state.scenes[0]?.id; render(); }));
+  view.querySelectorAll("[data-addchoice]").forEach(b=>b.addEventListener("click",e=>{
+    const s=sceneById(e.target.dataset.addchoice); if(s.choices.length<3){s.choices.push({label:"",next:""});render();} }));
+  view.querySelectorAll("[data-cdel]").forEach(b=>b.addEventListener("click",e=>{
+    const [id,ci]=e.target.dataset.cdel.split(":"); sceneById(id).choices.splice(+ci,1); render(); }));
+  view.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",e=>{
+    gotoScene(el.dataset.goto); }));
+  const add=view.querySelector("#addScene"); if(add)add.addEventListener("click",()=>{
+    state.scenes.push({id:uid(),text:"",choices:[]}); render(); });
+  const rd=view.querySelector("#resetDemo"); if(rd)rd.addEventListener("click",()=>{
+    if(confirm("Clear everything and start from a blank story?")){state=blankStory();syncHeader();render();}});
+  // play
+  view.querySelectorAll("[data-pick]").forEach(b=>b.addEventListener("click",e=>{
+    playChoose(+e.currentTarget.dataset.pick); }));
+  const rp=view.querySelector("#replay"); if(rp)rp.addEventListener("click",()=>{play=null;render();});
+}
+
+function setTabUI(){ document.querySelectorAll('nav.tabs button').forEach(b=>
+  b.setAttribute("aria-selected", b.dataset.tab===tab ? "true":"false")); }
+
+// ---------- boot ----------
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener("click",()=>{
+  tab=b.dataset.tab; setTabUI(); render(); }));
+document.getElementById("title").addEventListener("input",e=>{state.title=e.target.value;renderStatus();});
+document.getElementById("author").addEventListener("input",e=>{state.author=e.target.value;scheduleSave();});
+document.getElementById("exportBtn").addEventListener("click",()=>{
+  const v=validate();
+  if(v.issues.length && !confirm(`There are ${v.issues.length} thing(s) to fix. Export anyway?`)) return;
+  exportStory(); });
+document.getElementById("loadBtn").addEventListener("click",()=>document.getElementById("fileIn").click());
+document.getElementById("fileIn").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{ try{ importStory(JSON.parse(r.result)); }catch(err){ alert("Couldn't read that file."); } };
+  r.readAsText(f); e.target.value=""; });
+
+// ---------- submit for approval ----------
+function openSubmit(){
+  const v=validate();
+  if(v.issues.length && !confirm(`This story still has ${v.issues.length} thing(s) to fix. Send it anyway?`)) return;
+  document.getElementById("smDesc").textContent =
+    `Send “${state.title||"Untitled"}” by ${state.author||"(no name)"} to the curator for review.`;
+  document.getElementById("smMsg").value="";
+  document.getElementById("smHp").value="";
+  const st=document.getElementById("smStatus"), send=document.getElementById("smSend");
+  st.className="hint"; st.textContent=""; send.disabled=false; send.textContent="Send";
+  if(!SUBMIT_CONFIGURED){
+    st.className="hint msg-err";
+    st.textContent="Submitting isn't switched on yet — the owner needs to add a form address in the code (SUBMIT_ENDPOINT). For now, use Export and send the file.";
+    send.disabled=true;
+  }
+  document.getElementById("submitModal").classList.add("open");
+}
+function closeSubmit(){ document.getElementById("submitModal").classList.remove("open"); }
+async function doSubmit(){
+  if(document.getElementById("smHp").value){ closeSubmit(); return; }  // honeypot: silently drop bots
+  const st=document.getElementById("smStatus"), send=document.getElementById("smSend");
+  send.disabled=true; send.textContent="Sending…"; st.className="hint"; st.textContent="";
+  try{
+    const payload={
+      title: state.title||"Untitled",
+      author: state.author||"(no name)",
+      message: document.getElementById("smMsg").value||"",
+      submitted: new Date().toLocaleString(),
+      story: JSON.stringify(toMachineJSON(), null, 2),
+      _gotcha: ""
+    };
+    const res=await fetch(SUBMIT_ENDPOINT,{method:"POST",
+      headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    st.className="hint msg-ok"; st.textContent="✓ Sent! The curator will review it soon.";
+    send.textContent="Sent";
+    setTimeout(closeSubmit,1500);
+  }catch(err){
+    st.className="hint msg-err";
+    st.textContent="Couldn't send ("+err.message+"). Check your connection, or Export and send the file instead.";
+    send.disabled=false; send.textContent="Try again";
+  }
+}
+document.getElementById("submitBtn").addEventListener("click",openSubmit);
+document.getElementById("smCancel").addEventListener("click",closeSubmit);
+document.getElementById("smSend").addEventListener("click",doSubmit);
+document.getElementById("submitModal").addEventListener("click",e=>{ if(e.target.id==="submitModal") closeSubmit(); });
+
+state = loadSaved() || demoStory(); syncHeader(); render();
+</script>
 </html>
